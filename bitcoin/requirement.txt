@@ -1,0 +1,55 @@
+pip install bit
+from bit import PrivateKey
+wallet = PrivateKey
+
+print(wallet.address)
+print(wallet.balance)
+print(wallet.to_wif())
+
+# these two print statements can show sddress in terminal
+  it is not mandatory, you may can del those print statements.
+
+section#1
+=========
+
+COPY ---- PASTE ---- LOGIN-BLUEPRINT
+
+section#2
+=========
+
+- class -- objects -- addon; 
+    wallet = db.Column(db.string(1000), nullable = False)
+    address = db.Column(db.String(100), nullable = False)
+    amount = db.Column(db.String(1000), default = 0)
+    email = db.Column(db.String(100), nullable = False)
+
+- create a signuppage --- after logout()
+    @b_app.route('/signup', methods = ['POST', 'GET'])
+    def signup():
+        if request.method == 'POST' and request.form.get('username') and request.form.get('password') and request.form.get('email'):
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            
+            if User.query.filter_by(username = username).first():
+                flash('username taken')
+                return render_template('signup.html')
+            else:
+                wallet = PrivateKey
+                user = User(username=username, email = email, password = password, address = wallet.address, wallet = wallet.to_wif())
+                db.session.add(user)
+                db.session.commit()
+
+        elif request.method == 'POST':
+            flash('check your input')
+            return render_template('signup.html')
+        else:
+            return render_template('signup.html') 
+
+
+- we have to create our first user
+- prepare a signup html
+- copy-paste the "form content" from login to signup html
+  and addon another input for email
+  also add those jinja  templates of homepage to sign up page
+  add placeholders to every inputs

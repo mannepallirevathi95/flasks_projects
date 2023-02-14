@@ -1,0 +1,181 @@
+1. take user input : this can be use to create shortened urls from given
+2. shortened urls  : they are ids from our DB that redirect to user to current page
+3. a DB flask      : SQLAlchemy
+
+(a) primary :
+
+flask - basic app like welcome msg.
+files used - static(css), templates(homepage.html), main.py
+
+(b) secondary :
+
+taking user input part.
+
+section#1
+=========
+        - creation of anothor route(shorten) with "method - post"
+        - In html : create form with  two inputs(one_type - text, another_type - submit)[text should have name].form should have action = {{ url_for('shorten') }} method="POST"
+        - check the code
+
+section#2
+=========
+        CATCH THE LINK
+
+        (main.py)
+        - import requests
+        - inside shorten(), create link variable and assign from link name as request.(request.form['link'])
+        - check it by print(link), if needed
+ 
+ ================ 1st REQUIRMENT IS COMPLETED ===============================
+
+(c) third :
+
+creatin DB to store links
+
+section#3
+=========
+        (main.py)
+        - import SQLAlchemy
+        - after app name
+            url_app.config['SQLAlCHEMY_DATABASE_URI'] = 'sqlite:///dn.sqlite3'
+            db = SQLAlchemy(url_app)
+
+        - under "if" condition, 
+                db.create_all()
+        - creating DB
+        (before home() in main.py)
+        - define a class with classname as LINKS, pass parameters as (db.Model)
+        - class has; 
+                id , link , linkid
+                (code_for_db):
+                        id = db.Column(db.Interger,primary_key = True)
+                        link = db.Column(db.String(1000))
+                        linkid = db.Column(db.String(6),unique = True)
+
+section#4
+==========
+        some way to create link ids;
+
+        - create shortenlinks.py
+        - define a function with fun() name = creatid()
+         #(generate a 6 - char alphanumeric string that will be stored as linkid)
+        - import string
+        - from random import randint
+        - in createid():
+            ===(logic)===
+             id = ''
+             chars = string.printable[:62] #(this will print all the strings which we needed mainly, like; 0 to 9 and A to Z)
+             #(now we need a random charc from that above list so we importe randint)
+             for i in range(6):
+                    char = chars[randint(0,61)]
+                    id = id + char
+                return id
+            # run this logic; shortenlinks.py
+            # it will prints random cahracters
+        
+        - go to main.py
+        - from shortenlinks import createid
+        - chek code main.py
+        # here we create a func()to store links
+
+section#4
+==========
+       creating an entry - instead of writing in shorten()
+
+       - after class object
+       - define addnewlink(url) function
+       - logic inside is,
+            id = created()
+            newlink = LINKS(link = url, linkid = id)
+            db.session.add(newlink)
+            db.session.commit()
+            return id
+
+        - works : here we are created a way to shortened the links. we are defining a func() that will add to the DB. giving id and the value for it is taking from shortenlinks.py
+                 created newlink for just an instance , we can add link to db and flask sqlalchemy. once it is done, it will be displayed to user.
+
+section#5
+==========
+      (main.py)
+      - shorten() (logic)
+            link = request.form['link]
+            linkid = addnewlink(link)
+            print(linkid)
+            return 'i just shortenend the link'
+
+      - run it --> type: http://youtube.com/ --> submit --> 'i just..'
+      - as you seen in commandline there is 6-charc in db. copy that 
+
+      - route the user as followes,
+
+        main.py --> also import : redirect
+
+      - create a neww route
+         @url_app.route(/<linkid>)
+         def redir(linkid):
+                link = LINKS.query.filter_by(linkid = linkid).first()
+                return redirect(link.link)
+
+      - works: first it will takes "user valid url as input" if te user given 
+               and then this input info store into db and generate a 6-letters-string (charc),random charector and gives to the user
+               the user can use the ramdomly generated code and can get the destined portal.
+
+section#6
+=========
+
+       (home.html)
+
+       - h1 tag with {{ message }}
+       - (main.py) 
+                return render_template('home.html', message = 'SHORTEN YOUR URL')
+
+       - copy and paste it in shorten()
+                    nessage = linkid
+
+(d)fourth:
+
+       fixing flaws - 2
+
+       1. filter weather user link is a link or not
+
+       2. if the ser count to many, we need to make sure that the link isn't used before.
+
+section#7
+=========
+
+        for problem - 1:
+        
+         - use "phytex" similar to regex
+         - open in crome as seperate folder -- phythex.org
+         - mani.py --- import re
+         - we need to analyiz all kinds of inputs from user side
+           so for that we checked all "occurences" in phythex.org
+         - main.py --- shorten() --- after variable "link" --- (logic)
+                if re.search('https?://\w+.\w+.+' ,link) == None:
+                        return render_template('home.html', message = 'NOT A VALID')
+         - check it --- give invalid user input
+         - works: first it will takes user input and next it will check that it is a valid link or not .
+                  if it is true it will gives back random code to user else it will raise "NOT A VALID"
+section#8
+=========
+        for problem - 2
+
+         - main.py --- addnewlink() --- after variable "id" --- (logic)
+                if str(LINKS.query.filter_by(linkid = id).first()) != "None":
+                       while  str(LINKS.query.filter_by(linkid = id).first()) != "None":
+                                id = created()
+(e)fifth
+
+section#9
+=========
+
+        almost 90% completed. styling to look better.
+
+        - in html, h1 comes under a div tool and the div tool has a class name as header
+        -  form comes under div tool with name body.
+        - go through main.css.
+
+section#10
+============
+
+**************** SUCCESSFULLY COMPLETED ***************

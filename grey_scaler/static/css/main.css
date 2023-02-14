@@ -1,0 +1,14 @@
+body {
+    background: lightgreen;
+    align-items: center;
+}
+
+h1 {
+    text-align: center;
+    color: black;
+}
+
+.container {
+    text-align: center;
+}
+

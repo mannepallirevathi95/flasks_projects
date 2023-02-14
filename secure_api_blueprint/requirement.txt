@@ -1,0 +1,92 @@
+- import "jsonify" and "request" along with flask
+# this means apis are javascript obj notation
+
+section#1
+=========
+
+- in home() ---
+    name = request.get_json().get('name')
+    work = request.get_json().get('work')
+    return jsonify({'name':name, 'work':work})
+- testing the url in postman tool;
+    submit the url and send the url
+    by sending it we can see the responses
+    (# but.. actually my url is a localhost. here it won't send any request to this url. so we can access it by installing another version - client version of postman)
+
+section#2
+=========
+
+- create a database
+    - from flask_sqlalchemy import SQLAlchemy 
+    - under app--__name__
+        - app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
+        - db = SQLAlchemy(app)
+        - app.config['SECRET_KEY'] = 'MYSUPERSECRET'
+
+        - class User(db.model):
+            id = db.Column(db.Integer, primary_key = True)
+            public_id = db.Column(db.String(50), unique = True)
+            username = db.Column(db.String(50), unique = True)
+            password = db.Column(db.String(50), nullable = False)
+            admin = db.Column(db.Boolean, default = False)
+
+    - after class- obj ----
+        - first import --- from werkzeug.security import generate_password_hash, check_password_hash
+        - define a function createuser() with -- (logic)
+              password = 'secret' 
+              hashedpassword = generate_password_hash(password, method = "sha256")
+              new_user = User(public_id = str(uuid.uuid4()))
+
+              # pip install uuid
+              # import uuid
+
+
+              - print(uuid.uuid4())
+              # it print a random string with characters and numbers
+
+              - later you can remove the above print statement  and continue the logic
+
+              - (logic) ; username = 'reetu'
+                          password = hashedpassword
+                      db.session.add(new_user)
+                      db.session.commit()
+
+              - inside "if -- debug"
+                    db.create_all()
+
+              - call it; createuser()
+              - comment th above call func()
+        - create a route ('/api/login')
+            def login():
+               username = User.query.first().username
+                return jsonify()
+        - # run it in postman
+        - you can see the response as "secret"
+
+section#3
+=========
+
+TOKEN GENERATION
+
+- pip install PYJWT
+- import make_response along with flask
+- in logic();
+
+        - remove the stuff inside it and add --
+            
+            auth = request.authorization
+            if not auth or not auth.username or not auth.password:
+                return make_response('Could not verify', 401, {'WWW-Authenticate':'Basic realm = "Login required!"'})
+            user = User.query.filter_by(username = auth.username).first()
+
+            if not user:
+                return make_response('Could not verify', 401, {'WWW-Authenticate':'Basic realm = "Login required!"'})
+
+            if check_password_hash(user.password, auth.password):
+                token = jwt.encode({'public_id': user.public_id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(min = 30)}, app.config['SECRET_KEY'])
+                return jsonify({'token' : token.decode('UTF - 8')})
+
+            return make_response('Could not verify', 401, {'WWW-Authenticate':'Basic realm = "Login required!"'})
+            # import datetime
+
+            # run it --- succesfull means -- you can get a token 

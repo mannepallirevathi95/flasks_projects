@@ -1,0 +1,201 @@
+DO BASIC APP
+
+section#1
+=========
+
+- make a route to create login - page
+    ('/login', methods = ['POST', 'GET'])
+    - define it and return the login html page
+
+- create a layout html and login html
+    - layout html body contains;
+          {% block content %}
+          {% endblock %}
+
+    - login html;
+           {% extends 'layout.html' %}
+           
+           {% block content %}
+           {% endblock %} 
+
+- main.py --- also import flash
+- in login();
+    - add; flash('THIS IS A MESSAGE')
+
+- goto layout.html;
+    - add(before blockcontent); 
+           {% with messages = get_flashed_messages() %}
+           {% if messages %}
+           {% for message in messages %}
+           <h1> {{ message }} </h1>
+           {% endfor %}
+           {% endif %}
+           {% endwith %}
+- goto main.py ---
+    after app name; 
+    login_app.config['SECRET_KEY'] = 'SUPERSECRETKEY
+- works : this means it does'nt need to specify many times
+
+section#2
+=========
+
+- creating a database to connect
+- main.py;
+    from flask_sqlalchemy import SQLAlchemy
+    - after login_app --- name ---
+        login_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
+        db = SQLAlchemy(login_app)
+    - last -- above debug line ---
+        db.create_all()
+
+- before login route; --- create a class with classname -- "User" -- with parameter as --- db.Model ----
+- give objects as ;
+       id = db.Column(db.Integer,primary_key = True)
+       username = db.Column(db.String(50), unique = True)
+       password = db.Column(db.String(50, nullable = False))
+
+- goto login.html(comes between block content to endblock);
+    - create form with 3 inputs
+    - input types; one is submit, one is text and another one is password
+    - 1 input name = 'username' 1nother one name = 'password'
+    - form has method "POST"
+- main.py;
+    - import request also along with flask
+    - in login();
+    - logic;
+        if request.method == 'POST':
+            print(request.form.get('username'))
+            flash('THIS IS A MESSAGE')
+    - run it and check in terminal you get the given username
+    - now;
+        if request.method == 'POST' and request.form.get('username') and request.form.get('password'):
+            username = request.form.get('username')
+            password = request.form.get('password')
+            flash('THIS IS A MESSAGE')
+
+section#3
+=========
+- setting up flask login
+- pip install flask-login
+- main.py -- from flask_login import LoginManager,UserMixin,login_user
+- to impliment it;
+        - goto class -- add as an extera perameter
+        - (db.Model,UserMixin)
+
+- works : this will aloows what user have as username or password
+- now create an instance;
+        - below to class ---
+        - login_manager = LoginManager(login_app)
+- under login_manager variable --- create a new app;
+        @login_manager.user_loader
+        def load_user(user_id):
+            return User.get(user_id
+            
+- works: this will acces the user class and get the user data
+
+section#4
+=========
+
+- we have to create a login example
+- but we do'nt have any users rightnow.
+- just above "if - debug" --- 
+- define a createuser() pass parameters; username,password
+    - (logic) --- user = User(username = username, password = password)
+                  db.session.add(user)
+                  db.session.commit()
+
+    - call it;
+    createuser("goog","rocky")
+    - check this in terminal
+- main.py --- login() --- variable "password"  below --- (logic);
+     if User.query.filter_by(username = username).first():
+        user = User.query.filter_by(username = username).first()
+        if user.password == password:
+            login_user(user)
+            flash('YOU ARE NOT LOGGED IN')
+            return render_template('login.html')
+        else:
+            flash('WRONG PASSWORD')
+            return render_template('login.html')
+     else:
+        flash('USER DO NOT EXISTS')
+        return render_template('login.html')  
+
+- works : 1. we are having a login-row 
+          2. if the requested method is "not" empty, we can get the username and password from the user
+          3. if the user exixts, we declare him as an user
+          4. if user's password is supplied, he can login and he can seee a message 'YOU ARE NOE LOGGED IN'
+          5. if not; like..else; the above else statements will runs
+-  run it;
+
+section#5
+=========
+
+- create homepage.html and settings.html
+- settings.html;
+    {% extends 'layout.html' %}
+    {% block content %}
+    <h1> your settings </h1>
+    {% endblock %}
+
+- homepage.html;
+    {% extends 'layout.html' %}
+
+    {% block content %}
+
+    {% if current_user.is_authenticated %}
+
+    <h1> hi {{ current_user.username }} </h1>
+    
+    {% endif %}
+    
+    {% endblock %}
+
+- create a route for home and settings;
+    - above login() -- 
+    - @login_app.route('/')
+      def home():
+      return render_template('homepage.html')
+    - @login_app.route('/settings')
+      def settings():
+      return render_template('settings.html')
+-  copy paste;
+    - this content --
+        {% if current_user.is_authenticated %}
+
+        <h1> hi {{ current_user.username }} </h1>
+    
+        {% endif %}
+
+    - paste in;
+        - layout.html --- afetr "endwith" jinja render_template
+ 
+ section#6
+ =========
+
+ LOGIN REQUIRED
+
+- in flask_login also import login_required
+- under route for settings;
+    #add; @login_required
+
+- create a route for logout under settings()
+    - define logout()
+    - inside it; logout_user()
+    - it has to be return homepage
+    - import logout_user along login_required
+    - add this @login_required to here also just like before
+
+- in home route "print(current_user.username)" --- this has to be done
+  but.. unfortunately its not shown in terminal
+
+section#7(optional)
+=========
+
+- pip install flask-admin
+- from flask_admin import Admin
+- from flask_admin.contrib.sqla import ModelView
+- under the class ---
+        admin = Admin(login_app, name = 'name', template_mode = 'bootstrap3')
+        admin.add_view(ModelView(User,db.session))
+- if you run it you can see it and there is no need to explain

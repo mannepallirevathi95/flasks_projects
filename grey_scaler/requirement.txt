@@ -1,0 +1,157 @@
+create a basic flask app first
+
+starts
+*************
+
+section#1
+==========
+
+- create route for process with methods; post and get
+    ('/process/', methods = ['POST', 'GET'])
+
+- define this route and give print and return as
+    print('file uploads')
+    return redirect(request.referrer)
+- import the two methods along ---- redirect and request
+- in html; create a form with action and method along with 2 inputs
+    method = 'POST'
+    action = {{ url_for('process') }}
+    enctype = "multipart/"
+    -----inputs----
+        type 1 = 'file' name = 'file'
+        type 2 = 'submit'
+- check it;
+    - you can upload
+    - you can submit
+    - you can see the 'file uploads' in cmd terminal
+
+section#2
+==========
+
+getting the file and upload it into a specific location
+
+- from werkzeug.utils import secure_filename
+- import os
+- under g_app namme;
+    - UPLOAD_FOLDER = './static/process/'
+      ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    
+      g_app.config[UPLOAD_FOLDER'] = UPLOAD_FOLDER
+      g_app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
+
+- works : we need to give here an upload-folder and the path where it to be uploaded. so here iam just taking as static as the path to upload the folder
+          the variable - "UPLOAD_FOLDER" - is here to implement the uploaded files such that no other files can acces it; like a security purpose for implemented folders.
+          the variable - "ALLOWED_EXTENSIONS" - to specify which KIND of a folder that we are choosing
+          config - this help to initialize both the above variables 
+- instead of printing a profile in process() we can get some code
+    - main.py --- in process() --- (logic)
+    f = request.files['file']
+    
+    # we are requesting the user to upload the file from folder and we are taking the that input from the "name" ehich specified in html file
+    # now we create a "check" to see if file type is one we have specified
+    # you can also check by ; print(f.filename.split('.')[1])
+    # you can get "image - name" in the cmd terminal
+    
+    if f.filename.split('.')[1] in app.config['ALLOWED_EXTENSIONS']:
+        
+        f.save(os.path.join(app.config['UPLOAD_FOLDER'], f.filename))
+
+    else:
+        return ''
+
+- make a folder : static --- inside it another folder --- process 
+- works : we are taking valid input from user and we are saving it into in another folder by specifying the path
+- there is no file chosen before and now after this folder ids created; if we run it, a new img file will automaticatically saved into this folder
+
+section#3
+=========
+
+- create processor.py
+- pip install Pillow
+   - it is  an img processor for files
+
+- from PIL import Image
+- def processor(filename):
+      file = './static/process/' + filename
+      Img = Image.open(file)
+      grey = img.convert('L')
+      grey.save(file)
+
+- call it; processor(<upload img file>)
+- main.py --- 
+    from processor import processor
+
+- go to process() --- under f.save ----(logic)
+       processor(f.filename)
+
+- check it
+
+section#3
+=========
+
+we have to give download. that which grey scale image been created.
+
+- create a route under process() - route in main.py
+- route('/download/<filename>')
+- define a func() for download ad give a filename as parameter -- inside --- (logic)
+
+        filelocation = './static/process' + filename
+        return send_file(filelocation,as_attachment=True)
+
+- under processor(f.filename); we have to return a redirection as;
+        return redirect(url_for('download',filename=f.filename))
+- also ; import url_for and send_file in main.py along flask importation
+- check it
+
+section#4
+=========
+
+we can't save each one as no.of uploaders are there. such that to avoid the code confusion;
+- del the last "return" statement in process() --- in main.py
+
+- from flask_apscheduler import APScheduler
+# it will allows you to run functions in a time interval
+
+- defining a emptyfolder()
+  filelist=[f for f in os.listdir('./static/process/)]
+  print(filelist)
+  
+- in 'if - condition'; --- (logic)
+    scheduler.add_job(id='empty folder', func=emptyfolder, trigger='interval', seconds=4)
+    scheduler.start()
+
+- under app.config[] --- second part ---- ALLOWED_EXTENSIONS---
+   scheduler = APScheduler()
+
+- in emptyfolder() ---- remove print statement and add this --- (logic)
+  for f in filelist: 
+      os.remove(os.path.join('./static/process/',f))
+  print('files cleared')
+
+- works: 1. take color img from user
+         2. saving it into a folder
+         3. changing will be done from color img to grey scale
+         4. providing download option to doenload new grey scale img
+         5. it will waits for feww time till user to download it
+         6. if he may download it or not, it will get deleted automatically.
+
+section#5
+=========
+
+if the user won't give "particular - only - imgs"
+
+- in html;
+    - h1 tag ; {{ message }}
+    - goto -- main.py --- ('home.html', meassage = 'GREY SCALER')
+- handling flaws;
+    - contains;
+        a. wrong extenion submission
+        b. empty submission
+
+- problem fixing:
+    - in process() -- under else ----
+       return render_template('home.html', message='NOT VALID')
+    - in process() --- under "f" variable
+        return rendeer_template('home.html', message='PLEASE SELECT')
+
+    
